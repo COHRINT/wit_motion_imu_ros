@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 wit_imu imu_link" />
+
+    <node pkg="wit_imu" type="wit_imu" name="wit_imu_node"/>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find bno055_usb_stick)/utils/view_imu_rviz.rviz" />
+
+</launch>
