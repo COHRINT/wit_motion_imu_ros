@@ -16,6 +16,7 @@
 #include <boost/shared_ptr.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Vector3.h>
 
 static int ret;
 static int fd;
@@ -176,55 +177,106 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
 		chrBuf[chrCnt++]=chr;
 		if (chrCnt<11) return;
 		for (i=0;i<10;i++) cTemp+=chrBuf[i];
-		if ((chrBuf[0]!=0x55)||((chrBuf[1]&0x50)!=0x50)||(cTemp!=chrBuf[10])) {printf("Error:%x %x\r\n",chrBuf[0],chrBuf[1]);memcpy(&chrBuf[0],&chrBuf[1],10);chrCnt--;return;}
-		
+		if ((chrBuf[0]!=0x55)||((chrBuf[1]&0x50)!=0x50)||(cTemp!=chrBuf[10])) {
+            printf("Error:%x %x\r\n",chrBuf[0],chrBuf[1]);memcpy(&chrBuf[0],&chrBuf[1],10);
+            chrCnt--;
+            return;
+        }
+        bool data_received = false;
+
 		memcpy(&sData[0],&chrBuf[2],8);
 		switch(chrBuf[1])
 		{
 				case 0x51:
-					for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
+                {
+                    for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
 					time(&now);
-					printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
-					
+                    data_received = true;
+
+                    // ACCELERATION 
+                    
+                    
+                    
+                    // data. //TODO set the covariance of the IMU
+					// printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
 					break;
+                }
 				case 0x52:
+                {
+                    // GYRO OUTPUT 
 					for (i=0;i<3;i++) w[i] = (float)sData[i]/32768.0*2000.0;
-					printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);					
+
+                    // gyro_vec3.x = w[0] * (3.1415/180.0);
+                    // gyro_vec3.y = w[1] * (3.1415/180.0);
+                    // gyro_vec3.z = w[2] * (3.1415/180.0);
+                    // data.angular_velocity = vec3;
+                    // TODO set the covariance of the gyro
+
+					// printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);					
 					break;
+                }
 				case 0x53:
                 {
                     for (i=0;i<3;i++) Angle[i] = (float)sData[i]/32768.0*180.0;
                     //Convert angles to radians
 
-                    float roll = (Angle[0])*(3.1415/180.0);
-                    float pitch = Angle[1]*(3.1415/180.0);
-                    float yaw = Angle[2]*(3.1415/180.0);
+                    // float roll = (Angle[0])*(3.1415/180.0);
+                    // float pitch = Angle[1]*(3.1415/180.0);
+                    // float yaw = Angle[2]*(3.1415/180.0);
 
-                    sensor_msgs::Imu data;
-                    tf2::Quaternion myQuaternion;
+                    
 
-                    //Convert from euler angles to quaternion
-                    myQuaternion.setRPY( roll, pitch, yaw );
+                    // //Convert from euler angles to quaternion
+                    // myQuaternion.setRPY( roll, pitch, yaw );
 
                     //Set IMU message
-                    data.orientation = tf2::toMsg(myQuaternion);
-                    data.header.stamp = ros::Time::now();
-                    data.header.frame_id = ros::this_node::getNamespace() + "wit_imu";
-                    data.header.frame_id.erase(data.header.frame_id.begin());
-                    imu_pub.publish(data);
                     
-                    tf_pub.sendTransform(toTFTransform(myQuaternion,"fixed",data.header.frame_id));
+                    
+                    // tf_pub.sendTransform(toTFTransform(myQuaternion,"fixed",data.header.frame_id));
 
-					printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
+					// printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
 					break;
                 }
 					
 				case 0x54:
+                {
 					for (i=0;i<3;i++) h[i] = (float)sData[i];
-					printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
+
+                    // HEIGHT OUTPUT
+
+					// printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
 					
 					break;
+                }
 		}		
+        if( data_received ){
+            printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
+            printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);				
+            printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
+            printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
+            sensor_msgs::Imu data;
+            data.linear_acceleration.x = (double) a[0] * 9.8066;
+            data.linear_acceleration.y = (double) a[1] * 9.8066;
+            data.linear_acceleration.z = (double) a[2] * 9.8066;
+            data.angular_velocity.x = w[0] * (3.1415/180.0);
+            data.angular_velocity.y = w[1] * (3.1415/180.0);
+            data.angular_velocity.z = w[2] * (3.1415/180.0);
+            float roll = (Angle[0])*(3.1415/180.0);
+            float pitch = Angle[1]*(3.1415/180.0);
+            float yaw = Angle[2]*(3.1415/180.0);
+            //Convert from euler angles to quaternion
+            tf2::Quaternion myQuaternion;
+            myQuaternion.setRPY( roll, pitch, yaw );
+            data.orientation = tf2::toMsg(myQuaternion);
+
+            // geometry_msgs::Vector3 accel_vec3;
+            // geometry_msgs::Vector3 gyro_vec3;
+            data.header.stamp = ros::Time::now();
+            data.header.frame_id = "base_link"; //ros::this_node::getNamespace() + "wit_imu";
+            
+            // data.header.frame_id.erase(data.header.frame_id.begin());
+            imu_pub.publish( data );
+        }
 		chrCnt=0;		
 }
 
@@ -254,7 +306,7 @@ int main(int argc, char **argv)
 
 	//iFILE *fp;
 	//fp = fopen("Record.txt","w");
-    while(1)
+    while( ros::ok() )
     {
         ret = recv_data(fd,r_buf,44);
         if(ret == -1)

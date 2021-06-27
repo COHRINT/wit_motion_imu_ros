@@ -1,0 +1,21 @@
+<launch>
+
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 wit_imu imu_link" /> -->
+
+    <node pkg="wit_imu" type="wit_imu" name="wit_imu_node" output="screen"/>
+
+    <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find bno055_usb_stick)/utils/view_imu_rviz.rviz" /> -->
+
+    <!-- ODOMETRY -->
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true">
+        <rosparam command="load" file="$(find wit_imu)/params/odom_template.yaml" />
+        <remap from="odometry/filtered" to="odometry/filtered/odom"/>
+    </node>
+
+
+    <!-- DVL -->
+    <node pkg="wit_imu" type="baro.py" name="baro" />
+    <!-- BARO -->
+    <node pkg="wit_imu" type="dvl.py" name="dvl" />
+
+</launch>
