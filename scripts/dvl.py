@@ -6,7 +6,7 @@ import numpy as np
 
 rospy.init_node("dvl_sim")
 pub = rospy.Publisher("dvl", TwistWithCovarianceStamped, queue_size=1)
-r = rospy.Rate(50)
+r = rospy.Rate(10)
 seq = 0
 
 while not rospy.is_shutdown():

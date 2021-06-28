@@ -21,7 +21,7 @@
 static int ret;
 static int fd;
 
-#define BAUD 9600 //115200 for JY61 ,9600 for others
+#define BAUD 115200 //for JY61 ,9600 for others
 
 
 int uart_open(int fd,const char *pathname)
@@ -272,7 +272,7 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
             // geometry_msgs::Vector3 accel_vec3;
             // geometry_msgs::Vector3 gyro_vec3;
             data.header.stamp = ros::Time::now();
-            data.header.frame_id = "base_link"; //ros::this_node::getNamespace() + "wit_imu";
+            data.header.frame_id = "imu_link"; //ros::this_node::getNamespace() + "wit_imu";
             
             // data.header.frame_id.erase(data.header.frame_id.begin());
             imu_pub.publish( data );
@@ -317,7 +317,7 @@ int main(int argc, char **argv)
 		for (int i=0;i<ret;i++) {
             //fprintf(fp,"%2X ",r_buf[i]);
             ParseData(r_buf[i],imu_pub,tf_pub);}
-        usleep(1000);
+        // usleep(500);
     }
 
     ret = uart_close(fd);
