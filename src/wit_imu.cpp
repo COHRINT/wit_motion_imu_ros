@@ -241,7 +241,7 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
             tf2::Quaternion myQuaternion(quat[0], quat[1], quat[2], quat[3]);
             // myQuaternion.setRPY( roll, pitch, yaw );
 
-            // data.orientation = tf2::toMsg(myQuaternion); // comment back in for fused witmotion estimate
+            data.orientation = tf2::toMsg(myQuaternion); // comment back in for fused witmotion estimate
 
             // geometry_msgs::Vector3 accel_vec3;
             // geometry_msgs::Vector3 gyro_vec3;
