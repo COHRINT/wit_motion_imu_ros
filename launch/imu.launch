@@ -6,7 +6,7 @@
         <param name="device" value="/dev/ttyUSB0"/>
     </node>
 
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find bno055_usb_stick)/utils/view_imu_rviz.rviz" />
+    <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find bno055_usb_stick)/utils/view_imu_rviz.rviz" /> -->
 
     <node name="madgwick_filter" type="imu_filter_node" pkg="imu_filter_madgwick" />
 

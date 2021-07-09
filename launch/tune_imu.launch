@@ -16,14 +16,19 @@
     </node>-->
 <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true">
         <rosparam command="load" file="$(find wit_imu)/params/odom_template.yaml" />
-        <remap from="odometry/filtered" to="odometry/filtered/odom"/>
+        <remap from="odometry/filtered" to="odometry/filtered/odom_gyro"/>
+    </node>
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true">
+        <rosparam command="load" file="$(find wit_imu)/params/odom_template2.yaml" />
+        <remap from="odometry/filtered" to="odometry/filtered/odom_madgwick"/>
     </node>
 
     <!-- DVL -->
-   <!-- <node pkg="wit_imu" type="baro.py" name="baro" />-->
+   <node pkg="wit_imu" type="baro.py" name="baro" />
     <!-- BARO -->
-    <!--<node pkg="wit_imu" type="dvl.py" name="dvl" />-->
+    <node pkg="wit_imu" type="dvl.py" name="dvl" />
     <!-- ORI -->
-    <!--<node pkg="wit_imu" type="roll_pitch.py" name="roll_pitch" />-->
+    <node pkg="wit_imu" type="roll_pitch.py" name="roll_pitch" />
 
 </launch>
