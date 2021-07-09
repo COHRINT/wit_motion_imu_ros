@@ -19,7 +19,7 @@
         <remap from="odometry/filtered" to="odometry/filtered/odom_gyro"/>
     </node>
 
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true">
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom_mag" clear_params="true">
         <rosparam command="load" file="$(find wit_imu)/params/odom_template2.yaml" />
         <remap from="odometry/filtered" to="odometry/filtered/odom_madgwick"/>
     </node>

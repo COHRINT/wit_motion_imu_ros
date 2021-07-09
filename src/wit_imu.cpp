@@ -23,7 +23,7 @@ static int ret;
 static int fd;
 
 // #define BAUD 115200 //for JY61 ,9600 for others
-#define BAUD 9600
+#define BAUD 115200
 
 
 int uart_open(int fd,const char *pathname)
