@@ -17,11 +17,13 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Vector3.h>
+#include <sensor_msgs/MagneticField.h>
 
 static int ret;
 static int fd;
 
-#define BAUD 115200 //for JY61 ,9600 for others
+// #define BAUD 115200 //for JY61 ,9600 for others
+#define BAUD 9600
 
 
 int uart_open(int fd,const char *pathname)
@@ -165,8 +167,10 @@ static geometry_msgs::TransformStamped toTFTransform(tf2::Quaternion q,
     return transformStamped;
 }
 
-float a[3],w[3],Angle[3],h[3];
-void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster tf_pub)
+float a[3],w[3],Angle[3],mag[3], quat[4];
+int all_data_received = 0;
+int seq = 0;
+void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster tf_pub, ros::Publisher mag_pub)
 {
 		static char chrBuf[100];
 		static unsigned char chrCnt=0;
@@ -182,8 +186,6 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
             chrCnt--;
             return;
         }
-        bool data_received = false;
-
 		memcpy(&sData[0],&chrBuf[2],8);
 		switch(chrBuf[1])
 		{
@@ -191,69 +193,40 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
                 {
                     for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
 					time(&now);
-                    data_received = true;
-
-                    // ACCELERATION 
-                    
-                    
-                    
-                    // data. //TODO set the covariance of the IMU
-					// printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
+                    all_data_received |= 1;
 					break;
                 }
 				case 0x52:
                 {
                     // GYRO OUTPUT 
-					for (i=0;i<3;i++) w[i] = (float)sData[i]/32768.0*2000.0;
-
-                    // gyro_vec3.x = w[0] * (3.1415/180.0);
-                    // gyro_vec3.y = w[1] * (3.1415/180.0);
-                    // gyro_vec3.z = w[2] * (3.1415/180.0);
-                    // data.angular_velocity = vec3;
-                    // TODO set the covariance of the gyro
-
-					// printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);					
+					for (i=0;i<3;i++) w[i] = (float)sData[i]/32768.0*2000.0;				
+                    all_data_received |= 1 << 1;
 					break;
                 }
 				case 0x53:
                 {
                     for (i=0;i<3;i++) Angle[i] = (float)sData[i]/32768.0*180.0;
-                    //Convert angles to radians
-
-                    // float roll = (Angle[0])*(3.1415/180.0);
-                    // float pitch = Angle[1]*(3.1415/180.0);
-                    // float yaw = Angle[2]*(3.1415/180.0);
-
-                    
-
-                    // //Convert from euler angles to quaternion
-                    // myQuaternion.setRPY( roll, pitch, yaw );
-
-                    //Set IMU message
-                    
-                    
-                    // tf_pub.sendTransform(toTFTransform(myQuaternion,"fixed",data.header.frame_id));
-
-					// printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
 					break;
                 }
 					
-				case 0x54:
+				case 0x54: // Magnetic
                 {
-					for (i=0;i<3;i++) h[i] = (float)sData[i];
-
-                    // HEIGHT OUTPUT
-
-					// printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
-					
+					for (i=0;i<3;i++) mag[i] = (float)sData[i];
+                    all_data_received |= 1 << 2;
 					break;
+                }
+                case 0x59:
+                {
+                    for (i=0; i<4; i++) quat[i] = (float)sData[i] / 32768.0;
+                    all_data_received |= 1 << 3;
+                    break;
                 }
 		}		
-        if( data_received ){
+        if( all_data_received & 0xF == 0xF ){
             printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
             printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);				
             printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
-            printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
+            printf("mag:%4.0f %4.0f %4.0f ",mag[0],mag[1],mag[2]);
             sensor_msgs::Imu data;
             data.linear_acceleration.x = (double) a[0] * 9.8066;
             data.linear_acceleration.y = (double) a[1] * 9.8066;
@@ -261,21 +234,35 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
             data.angular_velocity.x = w[0] * (3.1415/180.0);
             data.angular_velocity.y = w[1] * (3.1415/180.0);
             data.angular_velocity.z = w[2] * (3.1415/180.0);
-            float roll = (Angle[0])*(3.1415/180.0);
-            float pitch = Angle[1]*(3.1415/180.0);
-            float yaw = Angle[2]*(3.1415/180.0);
+            // float roll = (Angle[0])*(3.1415/180.0);
+            // float pitch = Angle[1]*(3.1415/180.0);
+            // float yaw = Angle[2]*(3.1415/180.0);
             //Convert from euler angles to quaternion
-            tf2::Quaternion myQuaternion;
-            myQuaternion.setRPY( roll, pitch, yaw );
-            data.orientation = tf2::toMsg(myQuaternion);
+            tf2::Quaternion myQuaternion(quat[0], quat[1], quat[2], quat[3]);
+            // myQuaternion.setRPY( roll, pitch, yaw );
+
+            // data.orientation = tf2::toMsg(myQuaternion); // comment back in for fused witmotion estimate
 
             // geometry_msgs::Vector3 accel_vec3;
             // geometry_msgs::Vector3 gyro_vec3;
             data.header.stamp = ros::Time::now();
             data.header.frame_id = "imu_link"; //ros::this_node::getNamespace() + "wit_imu";
+            data.header.seq = seq;
             
             // data.header.frame_id.erase(data.header.frame_id.begin());
             imu_pub.publish( data );
+
+            sensor_msgs::MagneticField mag_data;
+            mag_data.header.stamp = ros::Time::now();
+            mag_data.header.frame_id = "imu_link";
+            mag_data.header.seq = seq;
+            mag_data.magnetic_field.x = mag[0];
+            mag_data.magnetic_field.y = mag[1];
+            mag_data.magnetic_field.z = mag[2];
+            mag_pub.publish(mag_data);
+
+            all_data_received = 0;
+            seq += 1;
         }
 		chrCnt=0;		
 }
@@ -286,7 +273,8 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
     static tf2_ros::TransformBroadcaster tf_pub;
 
-    ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("wit_imu",100);
+    ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("imu/data_raw",100);
+    ros::Publisher mag_pub = n.advertise<sensor_msgs::MagneticField>("imu/mag",100);
     std::string device;
     device = ros::param::param< std::string >("~device", "/dev/ttyUSB0");
     std::cout << device << std::endl;
@@ -319,7 +307,7 @@ int main(int argc, char **argv)
         }
 		for (int i=0;i<ret;i++) {
             //fprintf(fp,"%2X ",r_buf[i]);
-            ParseData(r_buf[i],imu_pub,tf_pub);}
+            ParseData(r_buf[i],imu_pub,tf_pub,mag_pub);}
         // usleep(500);
     }
 
