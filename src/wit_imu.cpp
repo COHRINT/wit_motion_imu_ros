@@ -297,6 +297,7 @@ int main(int argc, char **argv)
 
 	//iFILE *fp;
 	//fp = fopen("Record.txt","w");
+    ros::Rate r(10);
     while( ros::ok() )
     {
         ret = recv_data(fd,r_buf,44);
@@ -308,6 +309,7 @@ int main(int argc, char **argv)
 		for (int i=0;i<ret;i++) {
             //fprintf(fp,"%2X ",r_buf[i]);
             ParseData(r_buf[i],imu_pub,tf_pub,mag_pub);}
+        r.sleep();
         // usleep(500);
     }
 
