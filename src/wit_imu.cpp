@@ -297,7 +297,7 @@ int main(int argc, char **argv)
 
 	//iFILE *fp;
 	//fp = fopen("Record.txt","w");
-    ros::Rate r(25);
+    ros::Rate r(100);
     while( ros::ok() )
     {
         ret = recv_data(fd,r_buf,44);

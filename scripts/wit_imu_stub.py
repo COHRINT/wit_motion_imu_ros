@@ -11,7 +11,7 @@ def callback(msg):
     global pub
 
     imu = Imu()
-    imu.header.frame_id = "odom"
+    imu.header.frame_id = "base_link"
     imu.header.stamp = msg.header.stamp
     imu.orientation = msg.pose.pose.orientation
     pub.publish( imu )
