@@ -8,7 +8,7 @@ from geometry_msgs.msg import Quaternion
 
 rospy.init_node("ori_sim")
 pub = rospy.Publisher("ori", PoseWithCovarianceStamped, queue_size=1)
-r = rospy.Rate(10)
+r = rospy.Rate(0.5)
 seq = 0
 
 while not rospy.is_shutdown():

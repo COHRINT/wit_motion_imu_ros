@@ -246,7 +246,7 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
             // geometry_msgs::Vector3 accel_vec3;
             // geometry_msgs::Vector3 gyro_vec3;
             data.header.stamp = ros::Time::now();
-            data.header.frame_id = "imu_world"; //ros::this_node::getNamespace() + "wit_imu";
+            data.header.frame_id = "imu_link"; //ros::this_node::getNamespace() + "wit_imu";
             data.header.seq = seq;
             
             // data.header.frame_id.erase(data.header.frame_id.begin());
@@ -254,7 +254,7 @@ void ParseData(char chr, ros::Publisher imu_pub, tf2_ros::TransformBroadcaster t
 
             sensor_msgs::MagneticField mag_data;
             mag_data.header.stamp = ros::Time::now();
-            mag_data.header.frame_id = "imu_world";
+            mag_data.header.frame_id = "imu_link";
             mag_data.header.seq = seq;
             mag_data.magnetic_field.x = mag[0];
             mag_data.magnetic_field.y = mag[1];
@@ -297,7 +297,7 @@ int main(int argc, char **argv)
 
 	//iFILE *fp;
 	//fp = fopen("Record.txt","w");
-    ros::Rate r(100);
+    ros::Rate r(200);
     while( ros::ok() )
     {
         ret = recv_data(fd,r_buf,44);

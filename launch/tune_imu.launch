@@ -1,27 +1,18 @@
 <launch>
 
-    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0.7068252 0 0 0.7073883 base_link imu_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 base_link imu_link" />
 
     <node pkg="wit_imu" type="wit_imu" name="wit_imu_node" />
 
     <node pkg="minau_tools" type="echo_odom_orientation.py" name="echo_ori" output="screen"/>
 
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find bno055_usb_stick)/utils/view_imu_rviz.rviz" /> -->
-    <!-- <node name="rviz" pkg="rviz" type="rviz" /> -->
-
-    <!-- ODOMETRY -->
-    <!--<node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true">
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true">
         <rosparam command="load" file="$(find wit_imu)/params/odom_template.yaml" />
         <remap from="odometry/filtered" to="odometry/filtered/odom"/>
-    </node>-->
-<node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true">
-        <rosparam command="load" file="$(find wit_imu)/params/odom_template.yaml" />
-        <remap from="odometry/filtered" to="odometry/filtered/odom_gyro"/>
     </node>
 
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom_mag" clear_params="true">
-        <rosparam command="load" file="$(find wit_imu)/params/odom_template2.yaml" />
-        <remap from="odometry/filtered" to="odometry/filtered/odom_madgwick"/>
+    <node name="madgwick_filter" type="imu_filter_node" pkg="imu_filter_madgwick" >
+        <param name="publish_debug_topics" value="true" />
     </node>
 
     <!-- DVL -->
