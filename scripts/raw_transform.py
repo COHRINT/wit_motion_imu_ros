@@ -38,7 +38,7 @@ def callback(in_msg):
     q = tf.transformations.quaternion_from_euler(0, 0, new_yaw)
 
     msg.pose.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
-    cov = np.diag([-1,-1,-1,-1,0.1,0.1])
+    cov = np.diag([-1,-1,-1,0.5,0.1,0.1])
     msg.pose.covariance = list(cov.flatten())
     pub.publish(msg)
 
