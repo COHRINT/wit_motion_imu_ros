@@ -9,8 +9,6 @@ import tf
 from sensor_msgs.msg import Imu
 
 
-
-
 rospy.init_node("ori_sim")
 pub = rospy.Publisher("ori", PoseWithCovarianceStamped, queue_size=1)
 r = rospy.Rate(0.5)
