@@ -7,6 +7,7 @@ import numpy as np
 from geometry_msgs.msg import Quaternion
 import tf
 from sensor_msgs.msg import Imu
+from std_msgs.msg import Float64
 
 
 rospy.init_node("ori_sim")
@@ -40,7 +41,14 @@ def callback(in_msg):
     msg.pose.covariance = list(cov.flatten())
     pub.publish(msg)
 
+def correction_callback(msg):
+    global bias
+
+    bias += np.radians(msg.data)
+
+
 rospy.Subscriber("imu/data_raw", Imu, callback)
+rospy.Subscriber("imu/correction", Float64, correction_callback)
 
 while not rospy.is_shutdown():
     r.sleep()
